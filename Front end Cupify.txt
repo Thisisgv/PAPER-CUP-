@@ -1,0 +1,1055 @@
+// DartPad Flutter code (single file) — Cupify Frontend (Rewards + basic app shell)
+// Paste into https://dartpad.dev/?null_safety=true and run.
+
+import 'dart:async';
+import 'package:flutter/material.dart';
+
+void main() => runApp(const CupifyApp());
+
+class CupifyApp extends StatelessWidget {
+  const CupifyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Cupify',
+      theme: ThemeData(
+        useMaterial3: false,
+        scaffoldBackgroundColor: const Color(0xFFF4F6F8),
+        fontFamily: null, // DartPad default
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2E7D32)),
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (_) => const SplashScreen(),
+        '/login': (_) => const LoginScreen(),
+        '/signup': (_) => const SignUpScreen(),
+        '/app': (_) => const MainShell(),
+        '/app/scan': (_) => const ScanScreen(),
+      },
+    );
+  }
+}
+
+// ===== Common constants =====
+const kGreen = Color(0xFF2E7D32);
+const kDeepGreen = Color(0xFF1B5E20);
+const kBg = Color(0xFFF4F6F8);
+const kBorder = Color(0xFFE0E0E0);
+
+class AppCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets padding;
+  const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(16)});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorder),
+      ),
+      child: child,
+    );
+  }
+}
+
+class PrimaryButton extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const PrimaryButton({super.key, required this.text, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      width: double.infinity,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: kGreen,
+          shape: const StadiumBorder(),
+          elevation: 0,
+        ),
+        onPressed: onTap,
+        child: Text(text, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+}
+
+// ===== Splash =====
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: kDeepGreen,
+      body: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Cupify', style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white)),
+              SizedBox(height: 8),
+              Text('Turn Cups into EcoBucks', style: TextStyle(fontSize: 16, color: Colors.white70)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===== Login =====
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final email = TextEditingController();
+  final pass = TextEditingController();
+
+  @override
+  void dispose() {
+    email.dispose();
+    pass.dispose();
+    super.dispose();
+  }
+
+  void _login() {
+    Navigator.pushReplacementNamed(context, '/app');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 32),
+                  const Text('Welcome Back',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: kDeepGreen)),
+                  const SizedBox(height: 40),
+                  TextField(
+                    controller: email,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: _inputDeco('Email Address'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: pass,
+                    obscureText: true,
+                    decoration: _inputDeco('Password'),
+                  ),
+                  const SizedBox(height: 18),
+                  PrimaryButton(text: 'Login', onTap: _login),
+                  const SizedBox(height: 18),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/signup'),
+                    child: const Text('Create New Account', style: TextStyle(color: kGreen, fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+InputDecoration _inputDeco(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Color(0xFFDADADA)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: kGreen, width: 1.5),
+    ),
+  );
+}
+
+// ===== SignUp (simple) =====
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Create Account', style: TextStyle(color: kGreen, fontWeight: FontWeight.bold)),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 8),
+                  const Text('Join Cupify', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: kDeepGreen)),
+                  const SizedBox(height: 6),
+                  const Text('Start your eco-friendly journey today', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF777777))),
+                  const SizedBox(height: 18),
+                  TextField(decoration: _inputDeco('Full Name')),
+                  const SizedBox(height: 12),
+                  TextField(decoration: _inputDeco('Email Address')),
+                  const SizedBox(height: 12),
+                  TextField(decoration: _inputDeco('Phone Number (Optional)')),
+                  const SizedBox(height: 12),
+                  TextField(obscureText: true, decoration: _inputDeco('Password (min. 6 characters)')),
+                  const SizedBox(height: 12),
+                  TextField(obscureText: true, decoration: _inputDeco('Confirm Password')),
+                  const SizedBox(height: 16),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Checkbox(value: true, onChanged: (_) {}),
+                      const Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Text('I agree to the Terms and Conditions and Privacy Policy', style: TextStyle(color: Color(0xFF555555))),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  PrimaryButton(
+                    text: 'Create Account',
+                    onTap: () => Navigator.pushReplacementNamed(context, '/app'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===== Main Shell with Bottom Nav =====
+class MainShell extends StatefulWidget {
+  const MainShell({super.key});
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  int index = 0;
+
+  final pages = const [
+    HomeScreen(),
+    WalletScreen(),
+    RewardsScreen(), // ✅ Your requested page (React -> Flutter)
+    ProfileScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(child: pages[index]),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: index,
+        onTap: (i) => setState(() => index = i),
+        selectedItemColor: kGreen,
+        unselectedItemColor: Colors.grey,
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_outlined), activeIcon: Icon(Icons.account_balance_wallet), label: 'Wallet'),
+          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard_outlined), activeIcon: Icon(Icons.card_giftcard), label: 'Rewards'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), activeIcon: Icon(Icons.person), label: 'Profile'),
+        ],
+      ),
+    );
+  }
+}
+
+// ===== Home (simple like your UI) =====
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Header
+        Container(
+          color: kGreen,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Text('Cupify', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              IconButton(
+                onPressed: () {},
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(Icons.notifications_none, color: Colors.white),
+                    Positioned(
+                      right: -2,
+                      top: -2,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        decoration: const BoxDecoration(color: Color(0xFFF44336), shape: BoxShape.circle),
+                        child: const Center(
+                          child: Text('3', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              )
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                const AppCard(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('EcoBuck Balance', style: TextStyle(color: Color(0xFF777777))),
+                      SizedBox(height: 6),
+                      Text('245 EB', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: kGreen)),
+                      SizedBox(height: 4),
+                      Text('Level 3 Recycler', style: TextStyle(color: Color(0xFF999999))),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Scan QR button
+                Center(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pushNamed(context, '/app/scan'),
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: const BoxDecoration(color: kGreen, shape: BoxShape.circle, boxShadow: [
+                        BoxShadow(blurRadius: 14, offset: Offset(0, 6), color: Colors.black12),
+                      ]),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.qr_code_scanner, color: Colors.white, size: 40),
+                          SizedBox(height: 8),
+                          Text('SCAN QR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Total Cups Recycled', style: TextStyle(color: Color(0xFF555555))),
+                      const SizedBox(height: 8),
+                      const Text('245 Cups', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: kGreen)),
+                      const SizedBox(height: 14),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: 0.65,
+                          minHeight: 10,
+                          color: kGreen,
+                          backgroundColor: const Color(0xFFE0E0E0),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('55 cups to Level 4', style: TextStyle(fontSize: 12, color: Color(0xFF999999))),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 18),
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('Recent Activity', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF333333))),
+                      SizedBox(height: 14),
+                      _TxnRow(title: 'Machine #102', subtitle: 'Today, 2:30 PM', amountText: '+20 EB', positive: true),
+                      SizedBox(height: 10),
+                      _TxnRow(title: 'Machine #215', subtitle: 'Yesterday, 4:15 PM', amountText: '+15 EB', positive: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TxnRow extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String amountText;
+  final bool positive;
+  const _TxnRow({required this.title, required this.subtitle, required this.amountText, required this.positive});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333))),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(fontSize: 12, color: Color(0xFF999999))),
+          ]),
+        ),
+        Text(
+          amountText,
+          style: TextStyle(fontWeight: FontWeight.w700, color: positive ? kGreen : const Color(0xFF999999)),
+        ),
+      ],
+    );
+  }
+}
+
+// ===== Scan (simple animation-ish) =====
+class ScanScreen extends StatefulWidget {
+  const ScanScreen({super.key});
+  @override
+  State<ScanScreen> createState() => _ScanScreenState();
+}
+
+class _ScanScreenState extends State<ScanScreen> {
+  bool scanning = true;
+  Timer? t;
+
+  @override
+  void initState() {
+    super.initState();
+    t = Timer(const Duration(seconds: 3), () {
+      if (mounted) setState(() => scanning = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    t?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+              child: Row(
+                children: [
+                  const Expanded(child: Text('Scan Machine QR', style: TextStyle(color: Colors.white, fontSize: 16))),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                      child: const Icon(Icons.close, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: scanning ? _ScanFrame() : _ScanSuccess(onContinue: () => Navigator.pop(context)),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanFrame extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: 260,
+        height: 260,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+        child: Stack(
+          children: [
+            // Corner accents
+            Positioned(left: -2, top: -2, child: _CornerTL()),
+            Positioned(right: -2, top: -2, child: _CornerTR()),
+            Positioned(left: -2, bottom: -2, child: _CornerBL()),
+            Positioned(right: -2, bottom: -2, child: _CornerBR()),
+            // Fake scan line
+            Positioned.fill(child: _ScanLine()),
+          ],
+        ),
+      ),
+      const SizedBox(height: 18),
+      const Text('Align QR inside frame', style: TextStyle(color: Colors.white)),
+    ]);
+  }
+}
+
+class _ScanLine extends StatefulWidget {
+  @override
+  State<_ScanLine> createState() => _ScanLineState();
+}
+
+class _ScanLineState extends State<_ScanLine> with SingleTickerProviderStateMixin {
+  late final AnimationController c = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+  late final Animation<double> a = Tween<double>(begin: 0, end: 240).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: a,
+      builder: (_, __) => Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            top: a.value,
+            child: Container(height: 3, color: kGreen),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CornerTL extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 34,
+        height: 34,
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: kGreen, width: 4), left: BorderSide(color: kGreen, width: 4)),
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(10)),
+        ),
+      );
+}
+
+class _CornerTR extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 34,
+        height: 34,
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: kGreen, width: 4), right: BorderSide(color: kGreen, width: 4)),
+          borderRadius: BorderRadius.only(topRight: Radius.circular(10)),
+        ),
+      );
+}
+
+class _CornerBL extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 34,
+        height: 34,
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: kGreen, width: 4), left: BorderSide(color: kGreen, width: 4)),
+          borderRadius: BorderRadius.only(bottomLeft: Radius.circular(10)),
+        ),
+      );
+}
+
+class _CornerBR extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 34,
+        height: 34,
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: kGreen, width: 4), right: BorderSide(color: kGreen, width: 4)),
+          borderRadius: BorderRadius.only(bottomRight: Radius.circular(10)),
+        ),
+      );
+}
+
+class _ScanSuccess extends StatelessWidget {
+  final VoidCallback onContinue;
+  const _ScanSuccess({required this.onContinue});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Container(
+        width: 84,
+        height: 84,
+        decoration: const BoxDecoration(color: kGreen, shape: BoxShape.circle),
+        child: const Icon(Icons.check, color: Colors.white, size: 44),
+      ),
+      const SizedBox(height: 14),
+      const Text('Success!', style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 6),
+      const Text('Machine #102 verified', style: TextStyle(color: Colors.white70)),
+      const SizedBox(height: 14),
+      const Text('+20 EB', style: TextStyle(color: kGreen, fontSize: 34, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 18),
+      SizedBox(
+        width: 180,
+        height: 46,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: kGreen, shape: const StadiumBorder()),
+          onPressed: onContinue,
+          child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w600)),
+        ),
+      ),
+    ]);
+  }
+}
+
+// ===== Wallet =====
+class WalletScreen extends StatelessWidget {
+  const WalletScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final txns = [
+      {'title': 'Machine #102', 'time': 'Today', 'amt': '+20 EB', 'pos': true},
+      {'title': 'Machine #215', 'time': 'Yesterday', 'amt': '+15 EB', 'pos': true},
+      {'title': 'Machine #089', 'time': '2 days ago', 'amt': '+18 EB', 'pos': true},
+      {'title': 'Canteen Coupon', 'time': '3 days ago', 'amt': '-50 EB', 'pos': false},
+      {'title': 'Machine #102', 'time': '4 days ago', 'amt': '+22 EB', 'pos': true},
+      {'title': 'Machine #215', 'time': '5 days ago', 'amt': '+16 EB', 'pos': true},
+    ];
+
+    return Column(
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: const Center(
+            child: Text('Wallet', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: kGreen)),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                const AppCard(
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Available Balance', style: TextStyle(color: Color(0xFF777777))),
+                      SizedBox(height: 6),
+                      Text('245 EB', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: kGreen)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text('Transaction History', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF333333))),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                ...txns.map((t) {
+                  final pos = t['pos'] as bool;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: AppCard(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('${t['title']}', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333))),
+                              const SizedBox(height: 3),
+                              Text('${t['time']}', style: const TextStyle(fontSize: 12, color: Color(0xFF999999))),
+                            ]),
+                          ),
+                          Row(
+                            children: [
+                              Text('${t['amt']}', style: TextStyle(fontWeight: FontWeight.w700, color: pos ? kGreen : const Color(0xFF999999))),
+                              if (!pos) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.open_in_new, size: 16, color: Color(0xFF999999)),
+                              ]
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ===== Rewards (React app/rewards -> Flutter) =====
+class RewardsScreen extends StatelessWidget {
+  const RewardsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final rewards = <RewardItem>[
+      RewardItem(id: 1, title: 'Canteen Coupon', cost: 50, icon: Icons.restaurant, color: const Color(0xFFFF6B6B), available: true),
+      RewardItem(id: 2, title: 'Gift Voucher', cost: 100, icon: Icons.card_giftcard, color: const Color(0xFF4ECDC4), available: true),
+      RewardItem(id: 3, title: 'Coffee Voucher', cost: 75, icon: Icons.coffee, color: const Color(0xFF95E1D3), available: true),
+      RewardItem(id: 4, title: 'Store Discount', cost: 150, icon: Icons.shopping_bag, color: const Color(0xFFF38181), available: false),
+    ];
+
+    void redeem(RewardItem r) {
+      if (!r.available) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Redeemed ${r.title} for ${r.cost} EB')),
+      );
+    }
+
+    return Column(
+      children: [
+        // Header like your UI
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: const Center(
+            child: Text('Rewards', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: kGreen)),
+          ),
+        ),
+
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                // Balance Info card
+                const AppCard(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Your Balance', style: TextStyle(fontSize: 14, color: Color(0xFF777777))),
+                      Text('245 EB', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kGreen)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Grid (2 columns like your React code)
+                LayoutBuilder(
+                  builder: (context, c) {
+                    final crossAxisCount = c.maxWidth >= 420 ? 2 : 2; // keep 2 for mobile like your UI
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: rewards.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.92,
+                      ),
+                      itemBuilder: (context, i) {
+                        final r = rewards[i];
+                        return RewardCard(item: r, onRedeem: () => redeem(r));
+                      },
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 14),
+                // Tip bar (optional like your screenshot)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE8F5E9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: kGreen.withOpacity(0.2)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline, color: kDeepGreen, size: 18),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tip: Recycle more cups to unlock premium rewards!',
+                          style: TextStyle(color: kDeepGreen, fontWeight: FontWeight.w600, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class RewardItem {
+  final int id;
+  final String title;
+  final int cost;
+  final IconData icon;
+  final Color color;
+  final bool available;
+  RewardItem({
+    required this.id,
+    required this.title,
+    required this.cost,
+    required this.icon,
+    required this.color,
+    required this.available,
+  });
+}
+
+class RewardCard extends StatelessWidget {
+  final RewardItem item;
+  final VoidCallback onRedeem;
+  const RewardCard({super.key, required this.item, required this.onRedeem});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 62,
+            height: 62,
+            decoration: BoxDecoration(
+              color: item.color.withOpacity(0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(item.icon, color: item.color, size: 30),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            item.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333), fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${item.cost} EB',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: kGreen, fontSize: 18),
+          ),
+          const Spacer(),
+          SizedBox(
+            height: 38,
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: item.available ? kGreen : const Color(0xFFBDBDBD),
+                shape: const StadiumBorder(),
+                elevation: 0,
+              ),
+              onPressed: item.available ? onRedeem : null,
+              child: const Text('Redeem', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ===== Profile (simple placeholder) =====
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: const Row(
+            children: [
+              Expanded(child: Text('Profile', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: kGreen))),
+              Icon(Icons.settings, color: Color(0xFF666666)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                AppCard(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: const [
+                      CircleAvatar(radius: 34, backgroundColor: Color(0xFFC8E6C9), child: Text('V', style: TextStyle(color: kDeepGreen, fontSize: 24, fontWeight: FontWeight.bold))),
+                      SizedBox(height: 10),
+                      Text('Vishnu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      SizedBox(height: 4),
+                      Text('User ID: CUP24589', style: TextStyle(color: Color(0xFF888888))),
+                      SizedBox(height: 2),
+                      Text('Member since Jan 2026', style: TextStyle(color: Color(0xFFAAAAAA), fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: const [
+                    Expanded(
+                      child: AppCard(
+                        child: Column(
+                          children: [
+                            Icon(Icons.eco_outlined, color: kGreen),
+                            SizedBox(height: 6),
+                            Text('Cups Recycled', style: TextStyle(color: Color(0xFF777777), fontSize: 12)),
+                            SizedBox(height: 4),
+                            Text('245', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: kGreen)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: AppCard(
+                        child: Column(
+                          children: [
+                            Icon(Icons.emoji_events_outlined, color: kGreen),
+                            SizedBox(height: 6),
+                            Text('Level', style: TextStyle(color: Color(0xFF777777), fontSize: 12)),
+                            SizedBox(height: 4),
+                            Text('3', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: kGreen)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: kGreen,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Eco Warrior', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('Level 3 Recycler', style: TextStyle(color: Colors.white70)),
+                      SizedBox(height: 10),
+                      Text("You've recycled 245 cups and earned 245 EcoBucks. Keep it up!",
+                          style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const _ProfileTile(title: 'Edit Profile'),
+                const _ProfileTile(title: 'Recycling History'),
+                const _ProfileTile(title: 'Help & Support'),
+                const SizedBox(height: 16),
+                PrimaryButton(text: 'Logout', onTap: () => Navigator.pushReplacementNamed(context, '/login')),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ProfileTile extends StatelessWidget {
+  final String title;
+  const _ProfileTile({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF333333)))),
+            const Icon(Icons.chevron_right, color: Color(0xFF999999)),
+          ],
+        ),
+      ),
+    );
+  }
+}
